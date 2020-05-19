@@ -1,0 +1,61 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <h1 class="display-4">to the Businessgame Web-Based Assistant!</h1>
+    <h2 id="prompt">Please paste you API key below to continue:</h2>
+    <input type="text" id="apiKeyInput" name="apiKeyInput"><br />
+    <a href="https://businessgame.be/settings/api" target="_blank">click here to get your API key</a><br />
+    <button id="continueButton" type="button">Continue</button><br /><br /><br /><br />
+    <button id="clearCookiesButton" type="button">Clear Cookies</button>
+</div>
+
+
+@*LOAD Cookies*@
+<script>
+
+    var apiKey = getCookie("UserAPICode");
+    if (apiKey != null) {
+        document.getElementById("apiKeyInput").value = apiKey;
+        location.href = "/MainPage";
+    }
+    else //NO COOKIES FOUND, worst day eva...
+    {
+        document.getElementById("prompt").innerHTML = "Please paste your API code here:"
+    }
+
+    function getCookie(desiredCookieName) {
+        var returnValue = null;
+        var cookies = document.cookie.split(';');
+        cookies.forEach(function (cookie) {
+            var cookieName = cookie.split('=')[0].trim();
+            var cookieValue = cookie.split('=')[1].trim();
+            if (cookieName == desiredCookieName)
+                returnValue = cookieValue;
+        });
+        return returnValue;
+    }
+
+</script>
+
+@*Button Clicks*@
+<script type="text/javascript">
+    document.getElementById("continueButton").onclick = function () {
+        document.cookie = "UserAPICode=" + document.getElementById("apiKeyInput").value;
+
+        location.href = "/MainPage";
+    };
+
+    document.getElementById("clearCookiesButton").onclick = function () {
+        var now = new Date();
+        now.setMonth(now.getMonth() - 1);
+        document.cookie = "expires=" + now.toUTCString() + ";";
+
+        location.href = "/Index";
+    };
+</script>

@@ -1,0 +1,605 @@
+﻿@page
+@model BusinessgameAssistant.Pages.MainPageModel
+@{
+    ViewData["Title"] = "MainPage";
+}
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<div style="display:block;height:87vh; padding-left:15px; padding-right:15px">
+    <div style="width:35%; display:inline-block; align-content:center; float:left; background-color: #ebf5ee;overflow-y: auto;height:87vh;">
+        @foreach (var industry in Model.industries)
+        {
+            string imgSrc = "https://www.businessgame.be/images/industries/small/" + industry.name + ".png";
+        <div id="industryOuterDiv_@industry.name" style="        position: relative;
+        display: inline-block;
+        width: 110px;
+        height: 110px;
+        background-color: #e6e6e6;
+        padding-bottom: 10px;
+        margin-bottom: 5px;"
+             onmouseover="hoverEnter('@industry.name')"
+             onmouseout="hoverLeave('@industry.name')"
+             onclick="industryClick('@industry.name')">
+            <div id="industryInnerDiv_@industry.name" style="padding: 10px;text-align:center;">
+                <img style="position:absolute; height: 70px; width: 70px; top:20px; left:20px" src="@Html.Raw(imgSrc.ToLower())" alt="@industry.name" />
+                <strong style="position:absolute; top:5px; left:5px">@industry.name</strong>
+                <div id="toBuyUnitsLabel_@industry.name" style="position:absolute; font-weight:bold; color:green; top:40px; left:0px; width:100%; text-align:center; font-size:xx-large; z-index:9000;">+20k</div>
+                <div id="installedUnitsLabel_@industry.name" style="position:absolute; bottom:5px; left:10px; font-weight:bold;">-0 installed</div>
+            </div>
+        </div>
+        }
+    </div>
+    <div style="width:30%; display:inline-block; align-content:center; float:left; background-color: #2c63c8;overflow-y: auto;height:87vh;">
+
+
+        @*<h4 style="width:100%;text-align:center;color:white;">Selected Industry</h4>*@
+        <h1 id="selectedIndustryName" style="width:100%;color:white;padding-top:10px;text-align:center;">Silicon Smelter</h1>
+        <img id="selectedIndustryBigPic" style="float:left; width: 100%; padding-left:15%;padding-right:15%;" src="https://www.businessgame.be/images/industries/big/silicon smelter.png" alt="silicon smelter" />
+
+        <label style="width:100%;color:white;text-align:center;">Amount</label>
+        <br />
+        <input type="text" id="selectedIndustryCount" name="selectedIndustryCount" style="width:80%;margin-left:10%;margin-right:10%;text-align:center;">
+        <br />
+        <button style="width:90%;margin-left:5%;margin-right:5%;margin-top:5px;" onclick="updateSelectedAmountClick()">Update</button>
+        <br />
+        <label style="width:100%;color:white;text-align:center;">Increase by</label>
+        <br />
+        <input type="text" id="selectedIndustryCountChangeVal" name="selectedIndustryCountChangeVal" onchange="userChangedIncrementAmount();" style="width:80%;margin-left:10%;margin-right:10%;text-align:center;">
+        <br />
+        <button id="selectedIndustryCountChangeButton" style="width:90%;margin-left:5%;margin-right:5%;margin-top:5px;" @*onclick="incrementSelectedAmountClick()"*@>Increment</button>
+        <br />
+        <div style="width:100%;text-align: center;padding-top:15px;">
+            <label for="primaryPowerIndustry" style="color:white;">Primary Power Industry:</label>
+            <select id="primaryPowerIndustry" onchange="userChangedPrimaryPowerIndustry();"></select>
+            <br />
+
+            <input type="checkbox" id="cbxMaintainClosedLoop" onclick="userChangedMaintainClosedLoopOption();">
+            <label for="cbxMaintainClosedLoop" style="color:white;">Maintain Closed Loop</label>
+            <br />
+            <input type="checkbox" id="cbxUseInventory" onclick="redrawPurchaseOrderInfo(); userChangedUseMachinesInInventoryOption();">
+            <label for="cbxUseInventory" style="color:white;">Use Machines in Inventory</label>
+            <br>
+        </div>
+        
+    </div>
+
+    <div id="products_container" style="        width: 35%;
+        display: flex;
+        align-content: space-evenly;
+        background-color: #ebf5ee;
+        float: right;
+        overflow-y: auto;
+        height: 57vh; flex-flow: row wrap;justify-content: space-around;padding-top:90px;
+    ">
+        @foreach (var product in Model.products)
+        {
+            string imgSrc = "https://www.businessgame.be/images/products/small/" + product.name + ".png";
+        <div id="product_@product.name" style="        position: relative;
+        display: inline-block;
+        width: 90px;
+        height: 40px;
+        background-color: #e6e6e6;border:none;
+        padding-bottom: 8px;
+        margin-bottom: 1px;
+        margin-right: 1px;
+        margin-left: 1px;
+        text-align: center; " title="@product.name" onclick="productClick('@product.name');">
+            <div style="padding: 7px; text-align: center;">
+                <img style="float:left; height: 30px; width: 30px;" src="@Html.Raw(imgSrc.ToLower())" alt="@product.name" />
+                <stong id="productCountLabel_@product.name" style="float:right;">34k</stong>
+            </div>
+        </div>
+        }
+    </div>
+
+
+    <div id="purchase_info" style="        width: 35%;border:groove;position:relative;
+        background-color: #808080;
+        float: right;
+        overflow-y: auto;
+        height: 30vh; flex-flow: row wrap;justify-content: space-around;
+    ">
+        <button style="width:80px;position:absolute;right:5px;top:5px;" onclick="showPurchasePopup();">Popup</button>
+        <pre id="PurchaseOrder" style="width:100%;height:100%;color:white;">Purchase Order:
+No buy orders indicated! Select an industry and use increment button.</pre>
+    </div>
+</div>
+
+
+
+<script>
+    var productsBannedFromAuto = {};
+
+    var industries = @Html.Raw(Json.Serialize(Model.industries));
+    var products =  @Html.Raw(Json.Serialize(Model.products));
+    var userData = @Html.Raw(Json.Serialize(Model.userData));
+    var selectedIndustry = "Coal power plant";
+    productsBannedFromAuto["DummyProduct"] = "Banned";
+
+    industries.forEach(initializeIndustryNum);
+    assignUserIndustryLevelsToIndustriesArray();
+
+    updateNetProducts();
+    //Auto ban negative products
+    products.forEach(function (product) {
+        if (product.amount < 0)
+            productsBannedFromAuto[product.name] = "Banned";
+    });
+    redrawProductNumbers();    
+    industryClick(selectedIndustry);
+    setInterval(flicker, 500);
+
+    //Power Stuff
+    populatePrimaryPowerIndustryDropdown();
+    var actualPrimaryPower = getPrimaryPowerIndustryFromUserSetup();
+    var selectedPrimaryPowerName = getPrimaryPowerIndustryFromCookies();
+    if (selectedPrimaryPowerName == null)
+        selectedPrimaryPowerName = actualPrimaryPower.name;
+    document.getElementById('primaryPowerIndustry').value = selectedPrimaryPowerName;
+
+    //Other details stored in cookies
+    if (getCookie("MaintainClosedLoop") != null)
+        document.getElementById("cbxMaintainClosedLoop").checked = getCookie("MaintainClosedLoop") == "true";
+    if (getCookie("UseMachinesInInventory") != null)
+        document.getElementById("cbxUseInventory").checked = getCookie("UseMachinesInInventory") == "true";
+    if (getCookie("IncrementAmount") != null)
+        document.getElementById("selectedIndustryCountChangeVal").value = getCookie("IncrementAmount");
+
+    hoverLeave(selectedIndustry);
+
+    function initializeIndustryNum(item, index) {
+        item.amount = 0;
+        item.baseAmount = 0;
+        document.getElementById("installedUnitsLabel_" + item.name).innerText = item.amount + " Installed";
+        document.getElementById("toBuyUnitsLabel_" + item.name).innerText = "";
+    }
+
+    function assignUserIndustryLevelsToIndustriesArray() {
+        userData.industries.forEach(function (playerIndustry) {
+            var globalIndustry = getIndustry(playerIndustry.name);
+            globalIndustry.amount = playerIndustry.amount;
+            globalIndustry.baseAmount = playerIndustry.amount;
+        });
+        redrawIndustryNumbers();
+    }
+
+    function updateNetProducts() {
+        products.forEach(function (product) {
+            product.amount = 0;
+        });
+
+        industries.forEach(function (industry)
+        {
+            if (industry.input != null)
+                industry.input.forEach(function (input)
+                {
+                    var product = getProduct(input.name);
+                    product.amount -= input.amount * industry.amount;
+                });
+            if (industry.output != null)
+                industry.output.forEach(function (output) {
+                    var product = getProduct(output.name);
+                    product.amount += output.amount * industry.amount;;
+                });
+
+        });
+    }
+
+    function getProduct(name) {
+        return products.filter(function (item) { return item.name == name })[0];
+    }
+
+    function getIndustry(name) {
+        return industries.filter(function (item) { return item.name == name })[0];
+    }
+
+    var bannedOutlineColorA = "solid #005e96";
+    var bannedOutlineColorB = "solid #030303";
+
+    function redrawProductNumbers() {
+        reOrderProductsAccordingToNetProfit();
+        redrawPurchaseOrderInfo();
+
+        products.forEach(function (product) {
+            document.getElementById("productCountLabel_" + product.name).innerText = abbreviateNumber(product.amount);
+            var color = "#e6e6e6";
+            if (product.amount * product.price > 0)
+                color = "#47d170";
+            if (product.amount * product.price < 0 && product.amount > 0)
+                color = "#fcc372";
+            if (product.amount * product.price < 0 && product.amount < 0)
+                color = "#fc7272";
+            document.getElementById('product_' + product.name).style.background = color;
+
+            if (product.name in productsBannedFromAuto)
+                document.getElementById('product_' + product.name).style.border = bannedOutlineColorA;
+            else
+                document.getElementById('product_' + product.name).style.border = "none";
+        });
+
+    }
+
+    var flickerCount = 0;
+    function flicker() {
+        flickerCount++;
+        products.forEach(function (product) {
+            if (product.name in productsBannedFromAuto)
+                if (flickerCount % 2 == 1)
+                    document.getElementById('product_' + product.name).style.border = bannedOutlineColorA;
+                else
+                    document.getElementById('product_' + product.name).style.border = bannedOutlineColorB;
+        });
+    }
+
+    function redrawIndustryNumbers() {
+        industries.forEach( function (industry){
+            document.getElementById("installedUnitsLabel_" + industry.name).innerText = abbreviateNumber(industry.baseAmount) + " Installed";
+            if (industry.baseAmount - industry.amount != 0)
+                document.getElementById("toBuyUnitsLabel_" + industry.name).innerText = "+" + abbreviateNumber(industry.amount - industry.baseAmount);
+            else
+                document.getElementById("toBuyUnitsLabel_" + industry.name).innerText = "";
+        });
+    }
+
+
+    function productClick(productName) {
+        if (productName in productsBannedFromAuto == false)
+            productsBannedFromAuto[productName] = "Banned";
+        else
+            delete productsBannedFromAuto[productName];
+        redrawProductNumbers();
+    }
+
+//SELECTING INDUSTRY STUFF
+
+    var industryHoverColor = '#fab05c';
+    var industrySelectedColor = '#4287f5';
+    var industryNothing = '#e6e6e6';
+    var industryHoverSelectedColor = '#75a5f0';
+
+    function hoverEnter(industryName) {
+        if (industryName == selectedIndustry)
+            setIndustryColor(industryName, industryHoverSelectedColor);
+        else
+            setIndustryColor(industryName, industryHoverColor);
+    }
+
+    function hoverLeave(industryName) {
+        setIndustryColor(industryName, industryNothing);
+        setIndustryColor(selectedIndustry, industrySelectedColor);
+    }
+
+    function setIndustryColor(industryName, color) {
+        outerName = "industryOuterDiv_" + industryName;
+        innerName = "industryInnerDiv_" + industryName;
+        document.getElementById(outerName).style.background = color;
+        document.getElementById(innerName).style.background = color;
+    }
+
+    function industryClick(industryName) {
+        setIndustryColor(selectedIndustry, industryNothing);
+
+        selectedIndustry = industryName;
+        setIndustryColor(selectedIndustry, industrySelectedColor);
+
+        document.getElementById("selectedIndustryBigPic").src = "https://www.businessgame.be/images/industries/big/" + selectedIndustry.toLowerCase() + ".png";
+        document.getElementById("selectedIndustryName").innerHTML = selectedIndustry;
+        document.getElementById("selectedIndustryCount").value = getIndustry(selectedIndustry).amount;
+        //document.getElementById("selectedIndustryCountChangeVal").value = "1";
+    }
+
+    function updateSelectedAmountClick() {
+        var newAmount = parseFloat(document.getElementById("selectedIndustryCount").value);
+        getIndustry(selectedIndustry).amount = newAmount;
+
+        if (document.getElementById("cbxMaintainClosedLoop").checked == true)
+            maintainClosedLoop();
+
+        redrawIndustryNumbers();
+        updateNetProducts();
+        redrawProductNumbers();
+    }
+
+    function incrementSelectedAmount() {
+        var increment = parseFloat(document.getElementById("selectedIndustryCountChangeVal").value);
+        getIndustry(selectedIndustry).amount += increment;
+        document.getElementById("selectedIndustryCount").value = getIndustry(selectedIndustry).amount;
+
+        if (document.getElementById("cbxMaintainClosedLoop").checked == true)
+            maintainClosedLoop();
+
+        redrawIndustryNumbers();
+        updateNetProducts();
+        redrawProductNumbers();
+    }
+
+//'OnClick' event for clicking increment button (can hold down with same effect every 1/2 second)
+    var intervalId;
+    $("#selectedIndustryCountChangeButton").mousedown(function () {
+        incrementSelectedAmount();
+        intervalId = setInterval(incrementSelectedAmount, 500);
+    }).mouseup(function () {
+        clearInterval(intervalId);
+    }).mouseleave(function () {
+        //this should help solve the problem that occurs when the mouse leaves the button while pressed down
+        clearInterval(intervalId);
+    });
+
+
+
+//MISC TOOLS
+
+    function abbreviateNumber(value,precisionPoints = 2) {
+        var wasNegative = value < 0;
+        value = Math.ceil(Math.abs(value));
+        var newValue = value;
+        if (value >= 1000) {
+            var suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg", "Uvg"];
+            var suffixNum = Math.floor(("" + value).length / 3);
+            var shortValue = '';
+            for (var precision = precisionPoints; precision >= 1; precision--) {
+                shortValue = parseFloat((suffixNum != 0 ? (value / Math.pow(1000, suffixNum)) : value).toPrecision(precision));
+                var dotLessShortValue = (shortValue + '').replace(/[^a-zA-Z 0-9]+/g, '');
+                if (dotLessShortValue.length <= precisionPoints) { break; }
+            }
+            if (shortValue % 1 != 0) shortValue = shortValue.toFixed(precisionPoints - 1);
+            newValue = shortValue + suffixes[suffixNum];
+        }
+        if (wasNegative)
+            newValue = "-" + newValue;
+        return newValue;
+    }
+
+    function maintainClosedLoop(iterationsCount = 0) {
+        updateNetProducts();
+        var madeAnAlteration = false;
+        products.forEach(function (product) {
+            if (product.name in productsBannedFromAuto)//if its a banned product, skip
+                return;
+            if ((product.amount >= 22500 && product.name == "Trash") || (product.amount >= 4000 && product.name == "Wastewater") || (product.amount >= 27 && product.name == "Radioactive waste")) {
+                var primaryConsumer = getPrimaryConsumerIndustry(product.name);
+                primaryConsumer.amount += Math.floor(Math.abs(product.amount) / getInputProduct(primaryConsumer, product.name).amount);
+                madeAnAlteration = true;
+            } else if (product.amount < 0 && product.name != "Trash" && product.name != "Wastewater" && product.name != "Radioactive waste") {
+                var primaryProducer = getPrimaryProducerIndustry(product.name);
+                primaryProducer.amount += Math.ceil(Math.abs(product.amount) / getOutputProduct(primaryProducer, product.name).amount);
+                madeAnAlteration = true;
+            }
+
+        });
+
+        if (madeAnAlteration == true && iterationsCount < 15)
+            maintainClosedLoop(iterationsCount + 1);
+    }
+
+    var primaryIndustryLookup = {};
+    function getPrimaryProducerIndustry(resourceName) {
+        if (resourceName == "Energy")
+            return getIndustry(document.getElementById("primaryPowerIndustry").value);
+
+        //Check if we've done this before
+        if (primaryIndustryLookup[resourceName] != null)
+            return primaryIndustryLookup[resourceName];
+
+        //Go through every industry
+        var soFarBestIndustry = null;
+        industries.forEach(function (industry) {
+            if (industry.name == "Waste plant" || industry.name == "Water treatment plant" || industry.name == "Nuclear storage facility")//For waste water treatment facility
+                return;
+            if (getOutputProduct(industry, resourceName) != null)
+                if (soFarBestIndustry == null)
+                    soFarBestIndustry = industry;
+                else if (getOutputProduct(soFarBestIndustry, resourceName).amount < getOutputProduct(industry, resourceName).amount)
+                    soFarBestIndustry = industry;
+        });
+
+        //Remember & Return
+        primaryIndustryLookup[resourceName] = soFarBestIndustry;
+        return soFarBestIndustry;
+    }
+
+    var primaryConsumersIndustryLookup = {};
+    function getPrimaryConsumerIndustry(resourceName) {
+        //Check if we've done this before
+        if (primaryConsumersIndustryLookup[resourceName] != null)
+            return primaryConsumersIndustryLookup[resourceName];
+
+        //Go through every industry
+        var soFarBestIndustry = null;
+        industries.forEach(function (industry) {
+            if (getInputProduct(industry, resourceName) != null)
+                if (soFarBestIndustry == null)
+                    soFarBestIndustry = industry;
+                else if (getInputProduct(soFarBestIndustry, resourceName).amount > getInputProduct(industry, resourceName).amount)
+                    soFarBestIndustry = industry;
+        });
+
+        //Remember & Return
+        primaryConsumersIndustryLookup[resourceName] = soFarBestIndustry;
+        return soFarBestIndustry;
+    }
+
+    function getOutputProduct(industry, productName) {
+        var result = null;
+        industry.output.forEach(function (outputProduct) {
+            if (outputProduct.name == productName)
+                result = outputProduct;
+            });
+        return result;
+    }
+
+    function getPlayerInventoryAmount(productName) {
+        var result = 0;
+        userData.inventory.forEach(function (product) {
+            if (product.name == productName)
+                result = product.amount;
+        });
+        return result;
+    }
+
+    function getInputProduct(industry, productName) {
+        var result = null;
+        if (industry.input == null || industry.input == undefined)
+            return null;//Windmills have no input
+
+        industry.input.forEach(function (inputProduct) {
+            if (inputProduct.name == productName)
+                result = inputProduct;
+        });
+        return result;
+    }
+
+
+
+
+    function reOrderProductsAccordingToNetProfit() {
+        products.sort(function (a, b) {
+            if (a.amount == 0 && b.amount == 0)
+                return 0;
+            if (a.amount == 0 && (b.amount * b.price) < 0)
+                return +1;
+            if (b.amount == 0 && (a.amount * a.price) < 0)
+                return -1;
+            return (b.amount * b.price) - (a.amount * a.price);
+        });
+
+        var container = document.getElementById('products_container');
+
+        products.forEach(function (product, index) {
+            document.getElementById('product_' + product.name).style.order = index;
+        });
+    }
+
+    function redrawPurchaseOrderInfo() {
+        var purchaseOrderElement = document.getElementById('PurchaseOrder');
+        var output = "Purchase Order:";
+        var totalPrice = 0;
+        industries.forEach(function (industry) {
+            if (industry.amount - industry.baseAmount > 0) {
+                var industryPurchasePrice = getIndustryPurchasePrice(industry);
+                totalPrice += industryPurchasePrice;
+                output += "\n" + "+" + (industry.amount - industry.baseAmount) + "\t" + industry.name + " units \t" + (industry.name.length < 20 ? "\t" : "") + " €" + abbreviateNumber(industryPurchasePrice);
+            }
+            if (industry.amount - industry.baseAmount < 0) {
+                output += "\n" + industry.name + " : sell " + (industry.baseAmount - industry.amount) + " units";
+            }
+        });
+        output += "\n" + "--------------------";
+
+        //if (document.getElementById("cbxUseInventory").checked == true)
+
+        resetProductsToPurchaseCounts();
+        updateProductsToPurchaseCounts();
+        var reducedTotal = totalPrice + 0;
+        products.forEach(function (product) {
+            if (product.toPurchase != 0)
+                if (document.getElementById("cbxUseInventory").checked == true && getPlayerInventoryAmount(product.name) != null) {
+                    var newAmount = Math.max(0, product.toPurchase - getPlayerInventoryAmount(product.name));
+                    reducedTotal -= (product.toPurchase - newAmount) * product.price;
+                    output += "\n" + newAmount + "\t :  " + product.name + "  (reduced by " + getPlayerInventoryAmount(product.name) + ")";
+                }
+                else
+                    output += "\n" + product.toPurchase + "\t :  " + product.name;
+        });
+
+        output += "\n" + "--------------------";
+        if (document.getElementById("cbxUseInventory").checked == true)
+            output += "\n" + "Total Cost: €" + abbreviateNumber(reducedTotal,3) + "  (you saved €" + abbreviateNumber(totalPrice - reducedTotal) + "!!!)";
+        else
+            output += "\n" + "Total Cost: €" + abbreviateNumber(totalPrice,3);
+        output += "\n" + "--------------------";
+
+        purchaseOrderElement.innerHTML = output;
+
+       // output += "\n" + "";
+    }
+
+    function getIndustryPurchasePrice(industry) {
+        var total = 0;
+        industry.machinery.forEach(function (machine) {
+            total += (industry.amount - industry.baseAmount) * machine.amount * getProduct(machine.name).price;
+        });
+        return total + industry.price * (industry.amount - industry.baseAmount);
+    }
+
+    function resetProductsToPurchaseCounts() {
+        products.forEach(function (product) {
+            product.toPurchase = 0;
+        });
+    }
+
+    function updateProductsToPurchaseCounts() {
+        industries.forEach(function (industry) {
+            if (industry.amount - industry.baseAmount > 0)
+                industry.machinery.forEach(function (machine) {
+                    getProduct(machine.name).toPurchase += machine.amount * (industry.amount - industry.baseAmount);
+                });
+        });
+    }
+
+
+    function populatePrimaryPowerIndustryDropdown() {
+        industries.forEach(function (industry) {
+            var output = getOutputProduct(industry, "Energy");
+            if (output != null) {
+                var newOption = document.createElement('option');
+                newOption.appendChild(document.createTextNode(industry.name));
+                newOption.value = industry.name;
+                document.getElementById('primaryPowerIndustry').appendChild(newOption);;
+            }
+        });
+    }
+
+    function getPrimaryPowerIndustryFromUserSetup() {
+        var primary = null;
+        industries.forEach(function (industry) {
+            var output = getOutputProduct(industry, "Energy");
+            if (output != null) {
+                if (primary == null)
+                    primary = industry;
+                if (primary.amount * getOutputProduct(primary, "Energy").amount > industry.amount * output.amount)
+                    primary = industry;
+            }
+        });
+        return primary;
+    }
+
+    function getPrimaryPowerIndustryFromCookies() {
+        return getCookie("PrimaryEnergySource");
+    }
+
+    function getCookie(desiredCookieName) {
+        console.log(document.cookie);
+        var returnValue = null;
+        var cookies = document.cookie.split(';');
+        cookies.forEach(function (cookie) {
+            var cookieName = cookie.split('=')[0].trim();
+            var cookieValue = cookie.split('=')[1].trim();
+            if (cookieName == desiredCookieName)
+                returnValue = cookieValue;
+        });
+        return returnValue;
+    }
+
+    function userChangedPrimaryPowerIndustry() {
+        document.cookie = "PrimaryEnergySource=" + document.getElementById("primaryPowerIndustry").value;
+    }
+
+    function userChangedMaintainClosedLoopOption() {
+        document.cookie = "MaintainClosedLoop=" + document.getElementById("cbxMaintainClosedLoop").checked;
+    }
+
+    function userChangedUseMachinesInInventoryOption() {
+        document.cookie = "UseMachinesInInventory=" + document.getElementById("cbxUseInventory").checked;
+    }
+
+    function userChangedIncrementAmount() {
+        document.cookie = "IncrementAmount=" + document.getElementById("selectedIndustryCountChangeVal").value;
+    }
+
+    function showPurchasePopup() {
+        var instructionsWindow = window.open("", "MsgWindow", "width=200,height=100");
+        instructionsWindow.document.write("<pre>" + document.getElementById("PurchaseOrder").innerHTML + "</pre>");
+    }
+
+</script>
