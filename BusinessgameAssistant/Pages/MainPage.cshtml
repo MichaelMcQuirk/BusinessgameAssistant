@@ -13,13 +13,7 @@
 		@foreach (var industry in Model.industries)
         {
             string imgSrc = "https://www.businessgame.be/images/industries/small/" + industry.name + ".png";
-			<industry id="industryOuterDiv_@industry.name" name="@industry.name" style="position: relative;
-			display: inline-block;
-			width: 110px;
-			height: 110px;
-			background-color: #e6e6e6;
-			padding-bottom: 10px;
-			margin-bottom: 5px;"
+			<industry id="industryOuterDiv_@industry.name" name="@industry.name" 
 				 onmouseover="hoverEnter('@industry.name')"
 				 onmouseout="hoverLeave('@industry.name')"
 				 onclick="industryClick('@industry.name')">
@@ -604,17 +598,16 @@ No buy orders indicated! Select an industry and use increment button.</pre>
     }
 	
 	function filterIndustries() {
-		var industryList = document.getElementsByClassName("industry");
+		console.log("filtering");
+		var industryList = document.getElementsByTagName("industry");
 		var searchInput = document.getElementById("searchInput").value;
 		for(var i = 0; i < industryList.length; i++) {
 			var item = industryList[i];
-			
 			if(item.getAttribute("name").toLowerCase().includes(searchInput.toLowerCase())) {
-				item.style.display = "block";
+				item.style.display = "inline-block";
 			} else {
 				item.style.display = "none";
 			}
 		}
 	}
-
 </script>
