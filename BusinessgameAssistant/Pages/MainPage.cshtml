@@ -6,25 +6,27 @@
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
 
 <div style="display:block;height:87vh; padding-left:15px; padding-right:15px">
-    <div id="industryList" style="width:35%; display:inline-block; align-content:center; float:left; background-color: #ebf5ee;overflow-y: auto;height:87vh; padding-top: 50px;">
+    <div  style="width:35%;  float:left; align-content:center; background-color: #ebf5ee;height:87vh; ">
         <searchBar>
-			<input type="text" id="searchInput" placeholder="Search industry" oninput="filterIndustries()">
-		</searchBar>
-		@foreach (var industry in Model.industries)
-        {
-            string imgSrc = "https://www.businessgame.be/images/industries/small/" + industry.name + ".png";
-			<industry id="industryOuterDiv_@industry.name" name="@industry.name" 
-				 onmouseover="hoverEnter('@industry.name')"
-				 onmouseout="hoverLeave('@industry.name')"
-				 onclick="industryClick('@industry.name')">
-				<div id="industryInnerDiv_@industry.name" style="padding: 10px;text-align:center;">
-					<img style="position:absolute; height: 70px; width: 70px; top:20px; left:20px" src="@Html.Raw(imgSrc.ToLower())" alt="@industry.name" />
-					<strong style="position:absolute; top:5px; left:5px">@industry.name</strong>
-					<div id="toBuyUnitsLabel_@industry.name" style="position:absolute; font-weight:bold; color:green; top:40px; left:0px; width:100%; text-align:center; font-size:xx-large; z-index:9000;">+20k</div>
-					<div id="installedUnitsLabel_@industry.name" style="position:absolute; bottom:5px; left:10px; font-weight:bold;">-0 installed</div>
-				</div>
-			</industry>
-        }
+            <input type="text" id="searchInput" placeholder="Search industry" oninput="filterIndustries()">
+        </searchBar>
+        <div id="industryList" style="width:100%; display:inline-block; align-content:center; float:left; background-color: #ebf5ee;overflow-y: auto;height:80vh;">
+            @foreach (var industry in Model.industries)
+            {
+                string imgSrc = "https://www.businessgame.be/images/industries/small/" + industry.name + ".png";
+                <industry id="industryOuterDiv_@industry.name" name="@industry.name"
+                          onmouseover="hoverEnter('@industry.name')"
+                          onmouseout="hoverLeave('@industry.name')"
+                          onclick="industryClick('@industry.name')">
+                    <div id="industryInnerDiv_@industry.name" style="padding: 10px;text-align:center;">
+                        <img style="position:absolute; height: 70px; width: 70px; top:20px; left:20px" src="@Html.Raw(imgSrc.ToLower())" alt="@industry.name" />
+                        <strong style="position:absolute; top:5px; left:5px">@industry.name</strong>
+                        <div id="toBuyUnitsLabel_@industry.name" style="position:absolute; font-weight:bold; color:green; top:40px; left:0px; width:100%; text-align:center; font-size:xx-large; z-index:9000;">+20k</div>
+                        <div id="installedUnitsLabel_@industry.name" style="position:absolute; bottom:5px; left:10px; font-weight:bold;">-0 installed</div>
+                    </div>
+                </industry>
+            }
+        </div>
     </div>
     <div style="width:30%; display:inline-block; align-content:center; float:left; background-color: #2c63c8;overflow-y: auto;height:87vh;">
 

@@ -71,7 +71,11 @@ body {
 }
 searchBar {
 	background-color: silver;
-	position: fixed;
+	/*position: fixed;*/
+    display:block;
+    margin-left: auto;
+    margin-right: auto;
+    width:40%;
 	padding: 5px 10px;
 }
 industry {
